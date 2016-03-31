@@ -65,10 +65,10 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
                 latitude: coordenadas.lat,
                 longitude: coordenadas.lng
             };
-            $http.post('http://192.168.0.15:8080/focos', coordenadasParaEnvio).success(function (data, status, headers, config) {
+            $http.post('https://patrulha-da-dengue.herokuapp.com/focos', coordenadasParaEnvio).success(function (data, status, headers, config) {
                 addMarker(mapa, coordenadas);
 
-                addCircle(mapa, coordenadas);
+                addCircle(mapa, coordenadas, 100);
             });
         }
 
@@ -82,10 +82,10 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
             });
         }
 
-        function addCircle(map, latLng) {
+        function addCircle(map, latLng, raio) {
             new google.maps.Circle({
                 map: map,
-                radius: 100,
+                radius: raio,
                 center: latLng,
                 fillColor: '#AA6F39',
                 fillOpacity: 0.3,
@@ -131,7 +131,8 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
                 };
                 addMarker($scope.map, coordenadas);
 
-                addCircle($scope.map, coordenadas);
+                var raio = focosDeDengue[i].raioDoFoco;
+                addCircle($scope.map, coordenadas, raio);
             }
 
             $scope.map.addListener("click", function (event) {
@@ -143,7 +144,7 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
             });
         }
 
-        $http.get('http://192.168.0.15:8080/focos/').success(function (data) {
+        $http.get('https://patrulha-da-dengue.herokuapp.com/focos/').success(function (data) {
             iniciarMapa(data);
             $ionicLoading.hide();
         });
