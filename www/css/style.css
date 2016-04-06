@@ -3,7 +3,39 @@
     height: 100%;
 }
 
+[ng\:cloak],
+[ng-cloak],
+.ng-cloak {
+    display: none !important;
+}
+
 #mapa {
     height: 100%;
     width: 100%;
+}
+
+#form-descricao-do-foco {
+    position: absolute;
+    top: 300px;
+    width: 75%;
+    max-width: 350px;
+    margin: auto auto auto 10px;
+}
+
+.label-descricao-do-foco {
+    background-color: whitesmoke;
+    padding: 5px;
+}
+
+.button-descricao-do-foco-ok {
+    width: 16%;
+}
+
+.button-descricao-do-foco-x {
+    width: 13%;
+}
+
+.input-descricao-do-foco {
+    max-width: 68%;
+    display: inline-block !important;
 }

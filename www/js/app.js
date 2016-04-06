@@ -13,7 +13,7 @@ var example = angular.module('starter', ['ionic'])
     });
 });
 
-example.controller('MapController', function ($scope, $ionicLoading, $http) {
+example.controller('MapaController', function ($scope, $ionicLoading, $http) {
 
     $ionicLoading.show({
         template: 'Carregando focos de dengue...'
@@ -21,7 +21,24 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
 
     google.maps.event.addDomListener(window, 'load', function () {
 
-        function addYourLocationButton(map, initialLocation) {
+        var self = this;
+        self.mapa = '';
+        self.vaiDescrever = false;
+        self.coordenadasClicadas = {
+            lat: 1,
+            lng: 1
+        };
+        self.descricaoDoFoco = '';
+
+        self.cancelarDescricao = function () {
+            self.vaiDescrever = false;
+        };
+
+        function adicionarCampoDescricao() {
+            self.vaiDescrever = true;
+        }
+
+        function adicionarBotaoMinhaLocalizacao(mapa, initialLocation) {
             var controlDiv = document.createElement('div');
 
             var firstChild = document.createElement('button');
@@ -48,43 +65,21 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
             secondChild.style.backgroundRepeat = 'no-repeat';
             firstChild.appendChild(secondChild);
 
-            google.maps.event.addListener(map, 'center_changed', function () {
+            google.maps.event.addListener(mapa, 'center_changed', function () {
                 secondChild.style['background-position'] = '0 0';
             });
 
             firstChild.addEventListener('click', function () {
-                map.setCenter(initialLocation);
+                mapa.setCenter(initialLocation);
             });
 
             controlDiv.index = 1;
-            map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
+            mapa.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
         }
 
-        function adicionarMarcadorNoBanco(mapa, coordenadas) {
-            var coordenadasParaEnvio = {
-                latitude: coordenadas.lat,
-                longitude: coordenadas.lng
-            };
-            $http.post('https://patrulha-da-dengue.herokuapp.com/focos', coordenadasParaEnvio).success(function (data, status, headers, config) {
-                addMarker(mapa, coordenadas);
-
-                addCircle(mapa, coordenadas, 100);
-            });
-        }
-
-        function addMarker(map, latLng) {
-            var image = 'img/map-marker.png';
-            new google.maps.Marker({
-                position: latLng,
-                map: map,
-                title: 'Existe um foco de dengue aqui',
-                icon: image
-            });
-        }
-
-        function addCircle(map, latLng, raio) {
+        function adicionarRaioDoFoco(mapa, latLng, raio) {
             new google.maps.Circle({
-                map: map,
+                map: mapa,
                 radius: raio,
                 center: latLng,
                 fillColor: '#AA6F39',
@@ -95,8 +90,35 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
             });
         }
 
+        function adicionarFoco(mapa, latLng, descricaoDoFoco, raio) {
+            var image = 'img/map-marker.png';
+            new google.maps.Marker({
+                position: latLng,
+                map: mapa,
+                title: descricaoDoFoco,
+                icon: image
+            });
+            adicionarRaioDoFoco(mapa, latLng, raio);
+        }
+
+        function adicionarMarcadorNoBanco(coordenadas, descricaoDoFoco) {
+            var focoDeDengueASerCadastrado = {
+                latitude: coordenadas.lat,
+                longitude: coordenadas.lng,
+                descricao: descricaoDoFoco
+            };
+            $http.post('/focos', focoDeDengueASerCadastrado).success();
+        }
+
+        self.confirmarDescricao = function () {
+            self.vaiDescrever = false;
+            adicionarMarcadorNoBanco(self.coordenadasClicadas, self.descricaoDoFoco);
+            adicionarFoco(self.mapa, self.coordenadasClicadas, self.descricaoDoFoco, 100);
+        };
+
         function iniciarMapa(focosDeDengue) {
-            var zoomDefault = 17;
+
+            var zoomPadrao = 17;
 
             var initialLocation;
             var campoGrande = {
@@ -104,8 +126,8 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
                 lng: -53.35361
             };
 
-            $scope.map = new google.maps.Map(document.getElementById('mapa'), {
-                zoom: zoomDefault,
+            self.mapa = new google.maps.Map(document.getElementById('mapa'), {
+                zoom: zoomPadrao,
                 streetViewControl: true,
                 disableDoubleClickZoom: true,
                 mapTypeId: google.maps.MapTypeId.SATELLITE
@@ -114,13 +136,13 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function (position) {
                     initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    $scope.map.setCenter(initialLocation);
-                    addYourLocationButton($scope.map, initialLocation);
+                    self.mapa.setCenter(initialLocation);
+                    adicionarBotaoMinhaLocalizacao(self.mapa, initialLocation);
                 }, function () {
-                    $scope.map.setCenter(campoGrande);
+                    self.map.setCenter(campoGrande);
                 });
             } else {
-                $scope.map.setCenter(campoGrande);
+                self.map.setCenter(campoGrande);
             }
 
             var i, coordenadas;
@@ -129,24 +151,28 @@ example.controller('MapController', function ($scope, $ionicLoading, $http) {
                     lat: focosDeDengue[i].latitude,
                     lng: focosDeDengue[i].longitude
                 };
-                addMarker($scope.map, coordenadas);
-
                 var raio = focosDeDengue[i].raioDoFoco;
-                addCircle($scope.map, coordenadas, raio);
+                var descricao = focosDeDengue[i].descricao;
+                adicionarFoco(self.mapa, coordenadas, descricao, raio);
             }
 
-            $scope.map.addListener("click", function (event) {
-                coordenadas = {
+            self.mapa.addListener("click", function (event) {
+                adicionarCampoDescricao();
+                self.coordenadasClicadas = {
                     lat: event.latLng.lat(),
                     lng: event.latLng.lng()
                 };
-                adicionarMarcadorNoBanco($scope.map, coordenadas);
             });
         }
 
-        $http.get('https://patrulha-da-dengue.herokuapp.com/focos/').success(function (data) {
-            iniciarMapa(data);
+        $http({
+            method: 'GET',
+            url: 'http://localhost:8080/focos/'
+        }).then(function successCallback(response) {
+            iniciarMapa(response.data);
             $ionicLoading.hide();
+        }, function errorCallback() {
+            $log.error('Não foi possível encontrar os focos');
         });
     });
 
