@@ -17,7 +17,7 @@
             <h1 class="title">Patrulha da Dengue</h1>
         </ion-header-bar>
         <ion-content ng-controller="MapaController as mapaCtrl">
-            <div id="mapa" data-tap-disabled="true"></div>
+            <div id="mapa" ng-hide="mapaCtrl.geolocationDesativada" data-tap-disabled="true"></div>
             <form id="form-descricao-do-foco" ng-show="mapaCtrl.vaiDescrever">
                 <div class="form-group">
                     <label for="campo-descricao" class="label-descricao-do-foco">Oi. Você está prestes a adiconar um foco do mosquito. Descreva o local onde este foco foi encontrado.</label>
@@ -26,10 +26,17 @@
                     <button type="button" ng-click="mapaCtrl.confirmarDescricao()" class="btn btn-success button-descricao-do-foco-ok">OK</button>
                 </div>
             </form>
+            <form id="form-geolocalizacao" ng-show="mapaCtrl.geolocationDesativada">
+                <div class="recarregar-gps">
+                    <label class="label-descricao-do-foco">Ative a localização do seu celular para utilizar o aplicativo.</label>
+                    <button type="button" ng-click="mapaCtrl.recarregarPagina()" class="btn btn-default btn-recarregar"><i class="glyphicon glyphicon-refresh" aria-hidden="true"></i><span class="mensagem-gps">Recarregar...</span></button>
+                </div>
+            </form>
         </ion-content>
     </ion-pane>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyvUvW-ejncX6xqy7pqf-c9Evz_wDF_Hc"></script>
     <script src="lib/ionic/js/ionic.bundle.js"></script>
+    <script src="js/jquery.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="cordova.js"></script>
     <script src="js/app.js"></script>

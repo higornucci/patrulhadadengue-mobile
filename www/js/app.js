@@ -13,15 +13,21 @@ var example = angular.module('starter', ['ionic'])
     });
 });
 
-example.controller('MapaController', function ($scope, $ionicLoading, $http) {
+example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$window', function ($scope, $ionicLoading, $http, $window) {
+    var self = this;
+    self.geolocationDesativada = false;
 
     $ionicLoading.show({
         template: 'Carregando focos de dengue...'
     });
 
+    self.recarregarPagina = function () {
+        $window.location.reload(true);
+        self.geolocationDesativada = false;
+    };
+
     google.maps.event.addDomListener(window, 'load', function () {
 
-        var self = this;
         self.mapa = '';
         self.vaiDescrever = false;
         self.coordenadasClicadas = {
@@ -35,7 +41,9 @@ example.controller('MapaController', function ($scope, $ionicLoading, $http) {
         };
 
         function adicionarCampoDescricao() {
-            self.vaiDescrever = true;
+            $scope.$apply(function () {
+                self.vaiDescrever = true;
+            });
         }
 
         function adicionarBotaoMinhaLocalizacao(mapa, initialLocation) {
@@ -107,7 +115,7 @@ example.controller('MapaController', function ($scope, $ionicLoading, $http) {
                 longitude: coordenadas.lng,
                 descricao: descricaoDoFoco
             };
-            $http.post('/focos', focoDeDengueASerCadastrado).success();
+            $http.post('https://patrulha-da-dengue.herokuapp.com/focos', focoDeDengueASerCadastrado);
         }
 
         self.confirmarDescricao = function () {
@@ -137,9 +145,12 @@ example.controller('MapaController', function ($scope, $ionicLoading, $http) {
                 navigator.geolocation.getCurrentPosition(function (position) {
                     initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
                     self.mapa.setCenter(initialLocation);
+                    self.geolocationDesativada = false;
                     adicionarBotaoMinhaLocalizacao(self.mapa, initialLocation);
                 }, function () {
-                    self.map.setCenter(campoGrande);
+                    $scope.$apply(function () {
+                        self.geolocationDesativada = true;
+                    });
                 });
             } else {
                 self.map.setCenter(campoGrande);
@@ -167,7 +178,7 @@ example.controller('MapaController', function ($scope, $ionicLoading, $http) {
 
         $http({
             method: 'GET',
-            url: 'http://localhost:8080/focos/'
+            url: 'https://patrulha-da-dengue.herokuapp.com/focos/'
         }).then(function successCallback(response) {
             iniciarMapa(response.data);
             $ionicLoading.hide();
@@ -176,4 +187,4 @@ example.controller('MapaController', function ($scope, $ionicLoading, $http) {
         });
     });
 
-});
+}]);
