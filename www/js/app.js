@@ -1,20 +1,20 @@
-var example = angular.module('starter', ['ionic'])
+var example = angular.module('starter', ['ionic', 'ngCordova'])
+    .run(function ($ionicPlatform) {
+        $ionicPlatform.ready(function () {
+            if (window.cordova && window.cordova.plugins.Keyboard) {
+                cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
 
-.run(function ($ionicPlatform) {
-    $ionicPlatform.ready(function () {
-        if (window.cordova && window.cordova.plugins.Keyboard) {
-            cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
-
-            cordova.plugins.Keyboard.disableScroll(true);
-        }
-        if (window.StatusBar) {
-            StatusBar.styleDefault();
-        }
+                cordova.plugins.Keyboard.disableScroll(true);
+            }
+            if (window.StatusBar) {
+                StatusBar.styleDefault();
+            }
+        });
     });
-});
 
-example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$window', function ($scope, $ionicLoading, $http, $window) {
+example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$window', '$state', '$cordovaGeolocation', function ($scope, $ionicLoading, $http, $window, $state, $cordovaGeolocation) {
     var self = this;
+    var initialLocation;
     self.geolocationDesativada = false;
 
     $ionicLoading.show({
@@ -94,18 +94,31 @@ example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$wind
                 fillOpacity: 0.3,
                 strokeColor: '#AB5709',
                 strokeOpacity: 0.7,
-                strokeWeight: 2
+                strokeWeight: 2,
+                clickable:false
+            });
+        }
+        
+        function adicionarJanelaDeInformacao(mapa, marcador, descricaoDoFoco) {
+            var infoWindow = new google.maps.InfoWindow({
+                content: descricaoDoFoco
+            });
+
+            google.maps.event.addListener(marcador, 'click', function () {
+                infoWindow.open(mapa, marcador);
             });
         }
 
         function adicionarFoco(mapa, latLng, descricaoDoFoco, raio) {
             var image = 'img/map-marker.png';
-            new google.maps.Marker({
+            var marcador = new google.maps.Marker({
                 position: latLng,
                 map: mapa,
+                animation: google.maps.Animation.DROP,
                 title: descricaoDoFoco,
                 icon: image
             });
+            adicionarJanelaDeInformacao(mapa, marcador, descricaoDoFoco);
             adicionarRaioDoFoco(mapa, latLng, raio);
         }
 
@@ -128,7 +141,6 @@ example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$wind
 
             var zoomPadrao = 17;
 
-            var initialLocation;
             var campoGrande = {
                 lat: -19.55722,
                 lng: -53.35361
@@ -141,20 +153,18 @@ example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$wind
                 mapTypeId: google.maps.MapTypeId.SATELLITE
             });
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function (position) {
-                    initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                    self.mapa.setCenter(initialLocation);
-                    self.geolocationDesativada = false;
-                    adicionarBotaoMinhaLocalizacao(self.mapa, initialLocation);
-                }, function () {
-                    $scope.$apply(function () {
-                        self.geolocationDesativada = true;
-                    });
-                });
-            } else {
-                self.map.setCenter(campoGrande);
-            }
+            var options = {
+                timeout: 10000,
+                enableHighAccuracy: true
+            };
+            $cordovaGeolocation.getCurrentPosition(options).then(function (position) {
+                initialLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                self.mapa.setCenter(initialLocation);
+                self.geolocationDesativada = false;
+                adicionarBotaoMinhaLocalizacao(self.mapa, initialLocation);
+            }, function (error) {
+                self.geolocationDesativada = true;
+            });
 
             var i, coordenadas;
             for (i = 0; i < focosDeDengue.length; i++) {
