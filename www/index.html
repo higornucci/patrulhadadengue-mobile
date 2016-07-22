@@ -17,6 +17,7 @@
             <h1 class="title">Patrulha da Dengue</h1>
         </ion-header-bar>
         <ion-content ng-controller="MapaController as mapaCtrl">
+            <input id="pac-input" class="controls" type="text" placeholder="Procure por um local">
             <div id="mapa" ng-hide="mapaCtrl.geolocationDesativada" data-tap-disabled="true"></div>
             <form id="form-descricao-do-foco" ng-show="mapaCtrl.vaiDescrever">
                 <div class="form-group">
@@ -34,7 +35,7 @@
             </form>
         </ion-content>
     </ion-pane>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyvUvW-ejncX6xqy7pqf-c9Evz_wDF_Hc"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDyvUvW-ejncX6xqy7pqf-c9Evz_wDF_Hc&libraries=places"></script>
     <script src="lib/ionic/js/ionic.bundle.js"></script>
     <script src="lib/ngCordova/dist/ng-cordova.js"></script>
     <script src="cordova.js"></script>

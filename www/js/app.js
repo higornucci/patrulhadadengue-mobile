@@ -136,6 +136,34 @@ example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$wind
             adicionarMarcadorNoBanco(self.coordenadasClicadas, self.descricaoDoFoco);
             adicionarFoco(self.mapa, self.coordenadasClicadas, self.descricaoDoFoco, 100);
         };
+        
+        self.adicionarBusca = function(mapa) {
+            var input = document.getElementById('pac-input');
+            var searchBox = new google.maps.places.SearchBox(input);
+            mapa.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            mapa.addListener('bounds_changed', function() {
+                searchBox.setBounds(mapa.getBounds());
+            });
+
+            searchBox.addListener('places_changed', function() {
+                var places = searchBox.getPlaces();
+
+                if (places.length == 0) {
+                    return;
+                }
+
+                var bounds = new google.maps.LatLngBounds();
+                places.forEach(function(place) {
+                    if (place.geometry.viewport) {
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                mapa.fitBounds(bounds);
+            });
+        };
 
         function iniciarMapa(focosDeDengue) {
 
@@ -152,6 +180,8 @@ example.controller('MapaController', ['$scope', '$ionicLoading', '$http', '$wind
                 disableDoubleClickZoom: true,
                 mapTypeId: google.maps.MapTypeId.SATELLITE
             });
+            
+            self.adicionarBusca(self.mapa);
 
             var options = {
                 timeout: 10000,
